@@ -1,7 +1,7 @@
-import { asyncHandler } from "../utils/asyncHandler";
-import { apiError } from "../utils/apiError";
-import { apiResponse } from "../utils/apiResponse";
-import { User } from "../models/user.model";
+import { asyncHandler } from "../utils/asyncHandler.js";
+import { apiError } from "../utils/apiError.js";
+import { apiResponse } from "../utils/apiResponse.js";
+import { User } from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 
 const registerUser = asyncHandler(async (req, res) => {
@@ -23,8 +23,8 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new apiError(409, "User with username or email already exists");
   }
 
-  let profileImagePath = req.files?.profileImage?.path;
-
+  let profileImagePath = req.file?.path;
+  console.log(req.file.path)
   if (!profileImagePath) {
     throw new apiError(400, "profile image is required");
   }
