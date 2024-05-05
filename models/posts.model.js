@@ -7,10 +7,11 @@ const postSchema = new Schema(
       ref: "User",
       required: true,
     },
-    postContent: {
+    postText: {
       type: String,
+      required:true
     },
-    postImages: [
+    postMedia: [
       {
         type: String,
       },
@@ -25,4 +26,4 @@ const postSchema = new Schema(
   { timestamps: true }
 );
 
-export const Posts = mongoose.model("Posts", postSchema);
+export const Post = mongoose.model("Post", postSchema);
