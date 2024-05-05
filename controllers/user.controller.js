@@ -139,6 +139,34 @@ const loginUser = asyncHandler(async (req, res) => {
     );
 });
 
+const logoutUser = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  //refresh token ko remove kro
+  //cookies mn sy access token aur refresh token ko remove kro
+  await User.findByIdAndUpdate(
+    userId,
+    {
+      $unset: {
+        refreshToken: 1, //this removes field from the document
+      },
+    },
+    {
+      new: true,
+    }
+  );
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new apiResponse(200, {}, "user logged out"));
+});
+
 const getAllUsers = asyncHandler(async (req, res) => {
   const users = await User.find().select("-password -refreshToken");
 
@@ -250,4 +278,75 @@ const editUser = asyncHandler(async (req, res) => {
     .json(new apiResponse(200, editedUser, "User edited Successfully"));
 });
 
-export { registerUser, loginUser, getAllUsers, getUserById, editUser };
+const deleteUserById = asyncHandler(async (req, res) => {
+  //id access token sy b ly skty hain
+  //id body mn b bhji ja skti hai
+  //user ko db sy delete kro
+  //jb user delete ho jy ga to access token aur refresh token ko b cookies sy remove kr do
+
+  //profile image ko b cloudinary sy delete krna chaiye
+
+  const userId = req.user._id;
+
+  const deleteUser = await User.findByIdAndDelete(userId);
+  if (!deleteUser) {
+    throw new apiError(404, "Error in user deletion");
+  }
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  return res
+    .status(200)
+    .clearCookie("accessToken", options)
+    .clearCookie("refreshToken", options)
+    .json(new apiResponse(200, {}, "user deleted successfully"));
+});
+
+const getFriendsListById = asyncHandler(async (req, res) => {
+  const id = req.user._id;
+  const findUser = await User.findById(id)
+    .populate({
+      path: "friendsList",
+      select: "fullName profileImage",
+    })
+    .select("friendsList");
+  if (!findUser) {
+    throw new apiError(400, "Error occured in fetching friendlist");
+  }
+  return res
+    .status(200)
+    .json(new apiResponse(200, findUser, "User List fetehced successfully"));
+});
+
+const addFriend = asyncHandler(async (req, res) => {
+  const friendId = req.body.friendId;
+  if (!friendId) {
+    throw new apiError(400, "friend Id is required");
+  }
+
+  const updatedUser = await User.findByIdAndUpdate(
+    req.user._id,
+    { $push: { friendsList: friendId } },
+    { new: true } // To return updated document
+  );
+  if (!updatedUser) {
+    throw new apiError(400, "Error occured in adding friend to friendlist");
+  }
+  return res
+    .status(200)
+    .json(new apiResponse(200, updatedUser, "friend added successfully"));
+});
+export {
+  registerUser,
+  loginUser,
+  getAllUsers,
+  getUserById,
+  editUser,
+  logoutUser,
+  deleteUserById,
+  getFriendsListById,
+  addFriend,
+};
