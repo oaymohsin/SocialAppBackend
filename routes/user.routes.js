@@ -28,3 +28,6 @@ router.route("/getFriendsListById").get(verifyJWT, getFriendsListById);
 router.route("/addFriend").post(verifyJWT, addFriend);
 
 export default router;
+
+
+//comment added
