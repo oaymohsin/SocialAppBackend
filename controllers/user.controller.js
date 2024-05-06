@@ -329,7 +329,7 @@ const addFriend = asyncHandler(async (req, res) => {
 
   const updatedUser = await User.findByIdAndUpdate(
     req.user._id,
-    { $push: { friendsList: friendId } },
+    { $addToSet: { friendsList: friendId } },
     { new: true } // To return updated document
   );
   if (!updatedUser) {
