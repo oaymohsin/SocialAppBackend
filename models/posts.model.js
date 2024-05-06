@@ -9,13 +9,11 @@ const postSchema = new Schema(
     },
     postText: {
       type: String,
-      required:true
+      required: true,
     },
-    postMedia: [
-      {
-        type: String,
-      },
-    ],
+    postMedia: {
+      type: [String],
+    },
     Likes: [
       {
         type: Schema.Types.ObjectId,

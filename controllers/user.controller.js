@@ -339,6 +339,9 @@ const addFriend = asyncHandler(async (req, res) => {
     .status(200)
     .json(new apiResponse(200, updatedUser, "friend added successfully"));
 });
+
+
+
 export {
   registerUser,
   loginUser,
