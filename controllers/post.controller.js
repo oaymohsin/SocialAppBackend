@@ -127,4 +127,94 @@ const removeLikeFromPost = asyncHandler(async (req, res) => {
     .status(200)
     .json(new apiResponse(200, removePostLike, "Post like removed"));
 });
-export { createNewPost, likePost, removeLikeFromPost };
+
+const getPostByPostId = asyncHandler(async (req, res) => {
+  //get postId from req body
+  //if not then throw error that post Id is required
+  //search post through postId and return if found otherwise throw error
+
+  const { postId } = req.body;
+
+  if (!postId) {
+    throw new apiError(404, "postId is required");
+  }
+
+  const post = await Post.findById(postId);
+
+  if (!post) {
+    throw new apiError(404, "Post not exist");
+  }
+
+  return res
+    .status(200)
+    .json(new apiResponse(200, post, "Post fetched successfully"));
+});
+
+const getPostByUserId = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const getUserPosts = await Post.find({ postBy: userId });
+
+  if (getUserPosts.length < 1) {
+    return res
+      .status(400)
+      .json(new apiResponse(400, null, "This User has no Post"));
+  }
+
+  return res
+    .status(200)
+    .json(
+      new apiResponse(200, getUserPosts, "User Posts fethched Successfully")
+    );
+});
+
+const deletePostByPostId = asyncHandler(async (req, res) => {
+  const { postId } = req.body;
+
+  if (!postId) {
+    throw new apiError(404, "postId is required");
+  }
+
+  const deletePost = await Post.findByIdAndDelete(postId);
+
+  if (!deletePost) {
+    throw new apiError(404, "Error in post deletion");
+  }
+
+  return res
+    .status(200)
+    .json(new apiResponse(200, null, "Post Deleted successfully"));
+});
+
+const editPost = asyncHandler(async (req, res) => {
+  //we will allow user only to edit post Text
+  const { postId, postText } = req.body;
+
+  if (!postId || !postText) {
+    throw new apiError(404, "postId and Edited Post text is required");
+  }
+
+  const editPost = await Post.findByIdAndUpdate(
+    postId,
+    {
+      $set: { postText: postText },
+    },
+    { new: true }
+  );
+
+  if (!editPost) {
+    throw new apiError(404, "Error during Post editing");
+  }
+
+  return res
+    .status(200)
+    .json(new apiResponse(200, editPost, "Post edited successfully"));
+});
+export {
+  createNewPost,
+  likePost,
+  removeLikeFromPost,
+  getPostByPostId,
+  getPostByUserId,
+  deletePostByPostId,
+  editPost
+};
