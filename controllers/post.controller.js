@@ -186,7 +186,7 @@ const deletePostByPostId = asyncHandler(async (req, res) => {
 });
 
 const editPost = asyncHandler(async (req, res) => {
-  //we will allow user only to edit post Text
+  //we will allow user  to edit post Text only
   const { postId, postText } = req.body;
 
   if (!postId || !postText) {
