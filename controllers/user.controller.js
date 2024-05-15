@@ -9,6 +9,8 @@ import {
 import { getPublicId } from "../utils/getPublicIdFromURL.js";
 import { hashPassword } from "../utils/hashPassword.js";
 import jwt from "jsonwebtoken";
+import { sendEmail } from "../utils/nodeMailer.js";
+import { generateRandomCode } from "../utils/randomCodeGenerator.js";
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -51,7 +53,7 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 
   let profileImagePath = req.file?.path;
-  console.log(req.file.path);
+  // console.log(req.file.path);
   if (!profileImagePath) {
     throw new apiError(400, "profile image is required");
   }
@@ -340,7 +342,28 @@ const addFriend = asyncHandler(async (req, res) => {
     .json(new apiResponse(200, updatedUser, "friend added successfully"));
 });
 
+const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    throw new apiError(400, "email is required");
+  }
+  const isEmailValid=await User.findOne({email:email})
 
+  if(!isEmailValid){
+    throw new apiError(404,"Invalid Email address")
+  }
+
+  //generate random code
+  const code= generateRandomCode(6)
+  //send email through nodemailer
+  const confirmationCode=await sendEmail(email,code)
+
+  if(confirmationCode?.response){
+    console.log("mail sent successfully")
+    isEmailValid.verificationCode=code;
+    isEmailValid.save()
+  }
+});
 
 export {
   registerUser,
@@ -352,4 +375,5 @@ export {
   deleteUserById,
   getFriendsListById,
   addFriend,
+  forgotPassword
 };

@@ -38,6 +38,9 @@ const userSchema = new Schema(
     refreshToken: {
       type: String,
     },
+    verificationCode:{
+      type:String
+    }
   },
   { timestamps: true }
 );

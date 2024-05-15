@@ -4,6 +4,7 @@ import {
   addFriend,
   deleteUserById,
   editUser,
+  forgotPassword,
   getAllUsers,
   getFriendsListById,
   getUserById,
@@ -15,18 +16,18 @@ import { verifyJWT } from "../middlewares/auth.middleware.js";
 const router = express.Router();
 
 //User Routes
-router.route("/register").post(upload.single("profileImage"), registerUser);
+router.route("/register").post(upload.single("image"), registerUser);
 router.route("/login").post(loginUser);
 router.route("/getAllUsers").get(getAllUsers);
 router.route("/getUserById").get(verifyJWT, getUserById);
 router
   .route("/updateUser")
-  .post(verifyJWT, upload.single("profileImage"), editUser);
+  .post(verifyJWT, upload.single("image"), editUser);
 router.route("/logoutUser").post(verifyJWT, logoutUser);
 router.route("/deleteUserById").delete(verifyJWT, deleteUserById);
 router.route("/getFriendsListById").get(verifyJWT, getFriendsListById);
 router.route("/addFriend").post(verifyJWT, addFriend);
-
+router.route("/forgotPassword").post(forgotPassword)
 export default router;
 
 
