@@ -38,8 +38,19 @@ const userSchema = new Schema(
     refreshToken: {
       type: String,
     },
-    verificationCode:{
-      type:String
+    verification: {
+      code: {
+        type: String,
+        
+      },
+      createdAt: {
+        type: Date,
+        default: Date.now
+      },
+      updatedAt: {
+        type: Date,
+        default: Date.now
+      }
     }
   },
   { timestamps: true }

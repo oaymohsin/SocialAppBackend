@@ -19,10 +19,14 @@ app.use(cookieParser());
 import userRouter from "./routes/user.routes.js";
 import postRouter from "./routes/post.routes.js";
 import commentRouter from "./routes/comment.routes.js";
+import { errorHandler } from "./middlewares/errorHandling.middleware.js";
 
 //routes declaration
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/posts", postRouter);
 app.use("/api/v1/comments", commentRouter);
+
+//error handling middleware
+app.use(errorHandler)
 
 export { app };

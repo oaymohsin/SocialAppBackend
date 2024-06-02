@@ -347,22 +347,143 @@ const forgotPassword = asyncHandler(async (req, res) => {
   if (!email) {
     throw new apiError(400, "email is required");
   }
-  const isEmailValid=await User.findOne({email:email})
+  const isEmailValid = await User.findOne({ email: email });
 
-  if(!isEmailValid){
-    throw new apiError(404,"Invalid Email address")
+  if (!isEmailValid) {
+    throw new apiError(404, "Invalid Email address");
   }
 
   //generate random code
-  const code= generateRandomCode(6)
+  const code = generateRandomCode(6);
   //send email through nodemailer
-  const confirmationCode=await sendEmail(email,code)
+  const confirmationCode = await sendEmail(email, code);
 
-  if(confirmationCode?.response){
-    console.log("mail sent successfully")
-    isEmailValid.verificationCode=code;
-    isEmailValid.save()
+  if (confirmationCode?.response) {
+    //Save sent Verification code in Database
+    isEmailValid.verification.code = code;
+    isEmailValid.verification.updatedAt = new Date();
+
+    isEmailValid.save();
   }
+  return res
+    .status(200)
+    .json(
+      new apiResponse(200, email, "verificaton code has been sent your email")
+    );
+});
+
+const verifyCode = asyncHandler(async (req, res) => {
+  const { email, verificationCode } = req.body;
+  if (!email || !verificationCode) {
+    throw new apiError(400, "Both email and verification code are required");
+  }
+  const userDocument = await User.findOne({ email: email });
+  if (!userDocument) {
+    throw new apiError(404, "Wrong Email Address");
+  }
+  //Check verification code and expiry
+  const verificationCodeExpiry = process.env.VERIFICATION_CODE_EXPIRY;
+
+  const currentTime = new Date();
+  const timeDifference = currentTime - userDocument.verification.updatedAt;
+  const expiryDuration = verificationCodeExpiry * 60 * 1000;
+
+  console.log(timeDifference);
+  console.log(expiryDuration);
+  console.log(userDocument.verification.code);
+  if (
+    verificationCode == userDocument.verification.code &&
+    timeDifference < expiryDuration
+  ) {
+    return res
+      .status(200)
+      .json(new apiResponse(200, userDocument._id, "Verfication Code matched"));
+  } else {
+    throw new apiError(500, "Wrong code or code expired");
+  }
+});
+
+const resetPassword = asyncHandler(async (req, res) => {
+  const { userId, password } = req.body;
+  console.log(req.body);
+  if (!userId) {
+    throw new apiError(400, "userId is required");
+  }
+
+  try {
+    const hashedPassword = await hashPassword(password);
+    console.log(hashedPassword);
+    const user = await User.findByIdAndUpdate(
+      userId,
+      {
+        password: hashedPassword,
+      },
+      { new: true }
+    );
+
+    console.log(user);
+    if (!user) {
+      throw new apiError(500, "Error in resetting password");
+    }
+
+    return res
+      .status(200)
+      .json(new apiResponse(200, null, "Password Updated Successfully"));
+  } catch (error) {
+    throw new apiError(500, "Error resetting password", error); // Re-throw with details
+  }
+});
+
+const generateNewAccessToken = asyncHandler(async (req, res) => {
+  const { incomingRefreshToken } = req.body;
+  console.log(incomingRefreshToken)
+  if (!incomingRefreshToken) {
+    throw new apiError(400, "refresh token is required");
+  }
+  const decoded = jwt.verify(
+    incomingRefreshToken,
+    process.env.REFRESH_TOKEN_SECRET
+  );
+
+  console.log(`decoded token: ${decoded}`)
+  if (!decoded) {
+    throw new apiError(404, "Invalid Token");
+  }
+
+  const user = await User.findById(decoded._id);
+  if (!user) {
+    throw new apiError(400, "user not found");
+  }
+
+  const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
+    user._id
+  );
+
+  const loggedInUser = await User.findById(user._id).select(
+    "-password -refreshToken"
+  );
+
+  const options = {
+    httpOnly: true,
+    secure: true,
+  };
+
+  console.log(accessToken);
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
+      new apiResponse(
+        200,
+        {
+          user: loggedInUser,
+          accessToken,
+          refreshToken,
+        },
+        "User logged In successfully"
+      )
+    );
 });
 
 export {
@@ -375,5 +496,8 @@ export {
   deleteUserById,
   getFriendsListById,
   addFriend,
-  forgotPassword
+  forgotPassword,
+  verifyCode,
+  resetPassword,
+  generateNewAccessToken,
 };
